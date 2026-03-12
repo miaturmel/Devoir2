@@ -114,8 +114,12 @@ La fonction retourne une matrice représentant le nombre de parcelles dans chaqu
 
 ## Code 
 
-# Corrige la marice de transition, afin qu'elle suive le modèle de Markov 
-# Non paramétrique puisque l'historique des états n'intervient pas ( les transitions précédentes n'affecte pas les prochaines)
+#FONCTIONS
+
+# Corrige la marice de transition, afin qu'elle suive le modèle de Markov ( programmation défensive )
+# Simulation Non paramétrique puisque l'historique des états n'intervient pas (les transitions précédentes n'affecte pas les prochaines)
+# La fonction "check_transition_matrice"  permet de normaliser la matrice, afin que la somme des probabilité de chaques transition possibles pour un état 
+# initial donné sois de 100% ( chaques lignes = 1)
 function check_transition_matrix!(T)
     for ligne in axes(T, 1) # Pour tout les lignes de la matrice T
         if sum(T[ligne, :]) != 1 # Si la somme d'une ligne n'est pas égale à 1
@@ -126,10 +130,10 @@ function check_transition_matrix!(T)
     return T # Retourne la matrice corrigée au besoin
 end
 
-print(T)
-
-function check_function_arguments(transitions, states)
-    if size(transitions, 1) != size(transitions, 2)
+#  La fonction "Check_functions_arguments" vérifie  que l'ensemble des états initiaux et transitions possibles sont inclues ( Programmation défensive )
+# Ne corrige pas automatiquement, mais envoie un message d'avertissement qui signal une exception
+function check_function_arguments(transitions, states) 
+    if size(transitions, 1) != size(transitions, 2) # Si le nombre de ligne n'est pas égal au nombre de colone, renvoie un message d'avertissement 
         throw("La matrice de transition n'est pas carrée")
     end
 
@@ -256,7 +260,6 @@ end
 axislegend(ax)
 tightlimits!(ax)
 current_figure()
-
 
 
 # # Présentation des résultats
