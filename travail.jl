@@ -1,15 +1,15 @@
 # ---
-# title: Titre du travail
+# title: Devoir 2
 # repository: tpoisot/BIO245-modele
 # auteurs:
-#    - nom: Auteur
-#      prenom: Premier
-#      matricule: XXXXXXXX
-#      github: premierAuteur
-#    - nom: Auteur
-#      prenom: Deuxième
-#      matricule: XXXXXXXX
-#      github: DeuxiAut
+#    - nom: Lafontaine
+#      prenom: Laurianne
+#      matricule: 20275756
+#      github: LaurianneLafontaine
+#    - nom: Turmel
+#      prenom: Mia
+#      matricule: 20277557
+#      github: miaturmel
 # ---
 
 # # Introduction
@@ -28,15 +28,21 @@ Random.seed!(123456)
 using CairoMakie
 using Distributions
 
+# ## Une autre section
 
-# ## Code 
+"""
+    foo(x, y)
 
-#FONCTIONS
+Cette fonction ne fait rien.
+"""
+function foo(x, y)
+    ## Cette ligne est un commentaire
+    return nothing
+end
+## Code 
 
-# Corrige la marice de transition, afin qu'elle suive le modèle de Markov ( programmation défensive )
-# Simulation Non paramétrique puisque l'historique des états n'intervient pas (les transitions précédentes n'affecte pas les prochaines)
-# La fonction "check_transition_matrice"  permet de normaliser la matrice, afin que la somme des probabilité de chaques transition possibles pour un état 
-# initial donné sois de 100% ( chaques lignes = 1)
+# Corrige la marice de transition, afin qu'elle suive le modèle de Markov 
+# Non paramétrique puisque l'historique des états n'intervient pas ( les transitions précédentes n'affecte pas les prochaines)
 function check_transition_matrix!(T)
     for ligne in axes(T, 1) # Pour tout les lignes de la matrice T
         if sum(T[ligne, :]) != 1 # Si la somme d'une ligne n'est pas égale à 1
@@ -47,10 +53,10 @@ function check_transition_matrix!(T)
     return T # Retourne la matrice corrigée au besoin
 end
 
-#  La fonction "Check_functions_arguments" vérifie  que l'ensemble des états initiaux et transitions possibles sont inclues ( Programmation défensive )
-# Ne corrige pas automatiquement, mais envoie un message d'avertissement qui signal une exception
-function check_function_arguments(transitions, states) 
-    if size(transitions, 1) != size(transitions, 2) # Si le nombre de ligne n'est pas égal au nombre de colone, renvoie un message d'avertissement 
+print(T)
+
+function check_function_arguments(transitions, states)
+    if size(transitions, 1) != size(transitions, 2)
         throw("La matrice de transition n'est pas carrée")
     end
 
