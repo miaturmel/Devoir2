@@ -1,15 +1,15 @@
 # ---
-# title: Titre du travail
+# title: Devoir 2
 # repository: tpoisot/BIO245-modele
 # auteurs:
-#    - nom: Auteur
-#      prenom: Premier
-#      matricule: XXXXXXXX
-#      github: premierAuteur
-#    - nom: Auteur
-#      prenom: Deuxième
-#      matricule: XXXXXXXX
-#      github: DeuxiAut
+#    - nom: Lafontaine
+#      prenom: Laurianne
+#      matricule: 20275756
+#      github: LaurianneLafontaine
+#    - nom: Turmel
+#      prenom: Mia
+#      matricule: 20277557
+#      github: miaturmel
 # ---
 
 # # Introduction
@@ -25,19 +25,89 @@ Random.seed!(123456)
 using CairoMakie
 using Distributions
 
-# ## Une autre section
+# ## Documentation
 
 """
-    foo(x, y)
+    check_transition_matrix!(arg1)
 
-Cette fonction ne fait rien.
+Vérifie que la somme des lignes d'une matrice données correspond à 1.
+Si cette condition n'est pas respectée, la fonction modifie les valeurs des lignes en les normalisant.
+Un avertissement est émis pour aviser de la modification.
+
+# Arguments 
+arg1 = une matrice de transition. Les lignes de la matrice représente des distributions de tansitions d'états.
+
+# Retour
+La fonction retourne la matrice de transition potentiellement normalisée pour que les sommes des valeurs de chaque ligne correspondent à 1.
 """
-function foo(x, y)
-    ## Cette ligne est un commentaire
-    return nothing
-end
+
+"""
+    check_function_arguments(arg1, arg2)
+
+Vérifie en premier lieu que la matrice donnée soit carrée.
+Vérifie en deuxième lieu que tous les états soient représentées dans la matrice donnée.
+Renvoie un avertissement si une de ces conditions (ou les deux) ne sont pas respectées.
+
+# Arguments 
+arg1 = une matrice de transition.
+arg2 = la longueur d'un vecteur contenant les états possibles.
+
+# Retour
+La fonction ne retourne rien.
+"""
+
+"""
+    _sim_stochastic!(arg1, arg2, arg3)
+
+La fonction effectue une modification stochastique d'une matrice des états pour chaque génération.
+Les modifications sont effectuées selon une distribution multinomiale prenant en compte les états à la génération
+courante et les probabilités de transitions dans la matrice de transition.
+
+# Arguments 
+arg1 = une matrice représentant les états de la parcelle pour chaque génération.
+arg2 = une matrice de transition.
+arg3 = l'indice de la génération courante sur laquelle la fonction s'applique.
+
+# Retour
+La fonction ne retourne rien, elle modifie une directement une matrice.
+"""
+
+"""
+    _sim_determ!(arg1, arg2, arg3)
+
+La fonction effectue une modification déterministe d'une matrice des états pour chaque génération.
+La fonction multiplie les états des parcelles à la génération courante par les probabilités de transition
+contenues dans la matrice de transition, puis ajoute ces états de la prochaine génération à une matrice
+d'états pour chaque génération.
+
+# Arguments 
+arg1 = une matrice représentant les états de la parcelle pour chaque génération.
+arg2 = une matrice de transition.
+arg3 = l'indice de la génération courante sur laquelle la fonction s'applique.
+
+# Retour
+La fonction ne retourne rien, elle modifie une directement une matrice.
+"""
+
+"""
+    simulation(arg1, arg2; keyword1, keyword2)
+
+La fonction effectue les fonctions de programmation défensives établies plus tôt.
+Elle identifie ensuite le type de données sur lequel elle effectuera ses opérations et mes celles-ci 
+dans une matrice représentant les états de la parcelle pour chaque génération. La fonction détermine finalement
+si la simulation à réaliser doit être stochastique ou détermininiste et l'effectue pour chaque générations.
+
+# Arguments 
+arg1 = une matrice de transition.
+arg2 = la longueur d'un vecteur contenant les états possibles.
+keyword1 = un mot-clé représentant le nombre de génération sur lequel on effectue la simulation.
+keyword2 = un mot-clé pour identifier la manière dont la simulation est réalisée; de façon stochastique ou déterministe.
+
+# Retour
+La fonction retourne une matrice représentant le nombre de parcelles dans chaque état pour chaque génération.
+"""
+
 ## Code 
-
 # Corrige la marice de transition, afin qu'elle suive le modèle de Markov 
 # Non paramétrique puisque l'historique des états n'intervient pas ( les transitions précédentes n'affecte pas les prochaines)
 function check_transition_matrix!(T)
@@ -49,8 +119,6 @@ function check_transition_matrix!(T)
     end
     return T
 end
-
-print(T)
 
 function check_function_arguments(transitions, states)
     if size(transitions, 1) != size(transitions, 2)
