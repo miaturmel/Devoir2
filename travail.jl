@@ -29,6 +29,7 @@ import Random
 Random.seed!(123456)
 using CairoMakie
 using Distributions
+using LinearAlgebra
 
 # ## Documentation
 
@@ -214,28 +215,66 @@ end
 # PARAMETRES 
 
 # Vecteur avec les états initiaux  : Vide, gazon, Rose, Lila 
-initial_states = [200, 0, 0, 0]  # Commence avec 100 parcelles vides ( petit effectif )
+initial_states = [200, 0, 0, 0]  # Commence avec 200 parcelles vides ( petit effectif )
 # L'effet de stochasticité est grand, puisque la population est petite
 states = length(initial_states) # nombres d'états possibles 
+
 
 # Création de la matrice de transition
 T = zeros(Float64, states, states)
 
-# Ajouter une probabilité associé aux états posisble à la génération suivante,  pour chaques état initial
+# Nous essayons différentes valeurs de contenu de matrice pour nous approcher de la solution
+# La fonction suivante permet de vérifier si la proportion des états à l'équilibre selon la matrice
+# donne le résultat indiqué dans les consignes
 
-# Une parcelle vide a 13,75 x plus de chance de rester vide que devenir gazon, et aucune chance de devenir directement un buisson (impossible de grandir autant d'un coup )
-T[1, :] = [110, 8, 0] 
-# Une parcelle de gazon à 2,4 % de chance de devenir buisson, et 1,6 % de mourrir ( devenir vide )
-T[2, :] = [2, 120, 3]
-# Une parcelle de buisson a environ 1% de chance de mourrir ( devenir vide ), et ne peut pas devenir gazon 
-T[3, :] = [1, 0, 94]
-T
- 
+T[1, :] = [300, 10, 0, 0] # une parcelle vide a 30 fois plus de chance de rester vide que de devenir gazon
+
+T[2, :] = [2, 50, 3, 4] # une parcelle de gazon a plus de chance de rester gazon. Elle a plus de chance de devenir Lila que Rose, et une petite chance de devenir vide
+
+T[3, :] = [30, 0, 70, 0] # une parcelle de Rose a 30% de chance de devenir vide, aucune chance d'être remplacée par du gazon ou lila
+
+T[4, :] = [27, 0, 0, 73] # Une parcelle de lila à 27% de chance de devenir vide, aucune chance d'ête remplacée par du gazon ou lila 
+
+print(T)
+
+# CALCUL DES PROPORTIONS À L'ÉQUILIBRE (vecteur propre associé à la plus grande valeur propre)
+# À l'équilibre, les probabilité resteront les même lorsqu'ils sont multipliés par la matrice de transition 
+#  État à l'équilibre : Vecteur_propre*T= vecteurs_propre = T*valeurs_propre (1)
+# Cette fonction permet de vérifier la distribution des différents états à l'équilibre résultant des valeur posé dans la matrice de transition posés précedament 
+# pour que à l'équilibre 20% des parcelles soient végétalisées, et que parmi ces 20%, 30% soient des herbes, et 70% soient des buissons et ue la variété de
+# buisson la moins abondante ne représente pas moins de 30% du total des parcelles occupées par des buissons le vecteur propre souhaité est :
+
+proportions_souhaitees = [0.8,0.06,0.05,0.09] # ( vide, gazon, Rose, Lila)
+
+function Verification_resultat_equilibre(T,proportions_souhaitees)
+  # Calcul les valeurs et vecteurs propre de la matrice de transition
+  valeurs_propres, vecteurs_propres = eigen(T)
+  # Trouver l'indice du vecteur propre associé à la valeur propre qui se rapproche le plus de 1 (correspond au vecteur à l'équilibre)
+  indices_vecteur_propre_equilibre = findmin(abs.(valeurs_propres.-1)) 
+  # normalise le vecteur propre pour que la somme de la ligne = 1 et faire une distribution de probabilité à l'équilibre 
+  proportions_calculees= vecteurs_propres[indices_vecteur_propre_equilibre]./sum(vecteurs_propres[indice_vecteurs_propre_equilibre])
+
+
+  #Comparer avec la distribution souhaité
+ marge_erreur = 0.20 # marge d'erreur de 20% accepté
+
+ if maximum(abs.(proportions_calculees.-proportions_souhaitees)) < marge_erreur
+    println("La matrice de transition est adéquate")
+   else 
+    throw("La matrice ne permet pas d'atteindre les proportions souhaités à l'équilibre")
+   end 
+ return proportions_calcules
+end 
+
+
+
+
+
 #PARAMETRE DU GRAPHIQUE
 
 #Légende et couleurs associé
-states_names = ["vide", "Gazon", "Arbuste"]
-states_colors = [:grey40, :orange, :teal]
+states_names = ["vide", "Gazon", "Rose","Lila"]
+states_colors = [:grey40, :green, :pink, :purple]
 
 # Simulations sur le graphique
 f = Figure()
