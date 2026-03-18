@@ -27,7 +27,7 @@
 # une chaine de Markov qui explique la transitions entre deux états, qui est capable de prédire un état 
 # stationnaire et qui n'a pas de processus de mémoire (le modèle ne retient pas d'informations d'une transition
 # à une autre). C'est ainsi pour conserver l'intégrité des chaines de Markov que le modèle est non-paramétrique,
-# c'est-à-dire que la matrice d'états des parcelles et la matrice de transition modélisées séparémment. 
+# c'est-à-dire que la matrice d'états des parcelles et la matrice de transition sont modélisées séparémment. 
 
 # De plus, le modèle peut être représenté de deux manières : stochastique ou déterministe.
 
@@ -37,11 +37,11 @@
 # prend en compte des nombres entiers, ce qui permet au modèle d'être plus réaliste, selon la situation. Selon 
 # ce type de modèle, nous faisons plusieurs simulations qui n'ont pas toujours les mêmes résultats.
 
-# Pour le modèle déterministe suit l'équation suivante pour déterminer l'état des parcelles à la prochaine
+# Le modèle déterministe suit l'équation suivante pour déterminer l'état des parcelles à la prochaine
 # génération : L'état de la parcelle à la génération suivante = l'état de la parcelle à la génération 
 # courante * la probabilité de transition associée à ce changement d'état. Dans ce modèle, la taille de 
 # la population est considérée comme infinie, puisqu'elle n'a pas d'effet sur le résultat de la simulation.
-# Ce modèle représente donc une dynamique des populations plutôt thérique, qui manque un peu de réaliste puisqu'il
+# Ce modèle représente donc une dynamique des populations plutôt théorique, qui manque un peu de réaliste puisqu'il
 # ne simule pas la variance des résultats.
 
 # # Présentation du modèle
@@ -339,8 +339,6 @@ println(proportions_calculees) # Donne les proportions acceptable atteint avec l
 # Une fois la matrice de transition déterminée, vérifier si les critères sont respectés dans au moins 80% des simulations
 # function Verification_critères_fixés (proportions_calculees, T, Timesseries, )
 
-# function resultats (timeseries, proportions_souhaitees)
-
 """
     resultat(arg1, arg2)
 
@@ -401,7 +399,7 @@ ax = Axis(f[1, 1], xlabel="Nb. générations", ylabel="Nb. parcelles")
  limits!(ax, 0, 100, 0, 20)
 
 # Zoom 2 sur les parcelles vide  
-# limits!(ax, 0, 100, 180, 200)
+limits!(ax, 0, 100, 180, 200)
 
 # Superpose les 2 types de simulation sur le graphique, pour l'analyse
 # Stochastic simulation
@@ -433,48 +431,35 @@ current_figure()
 # Un probléme empêche donc la fonction de guider le choix de valeurs dans la matrice de transition. Si  " Verification_resultat_equilibre" serait fonctionnelle, 
 # il serait possible de trouver des valeurs à l'équilibre se rapprochant des critères fixés. 
 
-
-# Toutefois, Une matrice de transition qui tente à de reproduire les proportions désirés à été déterminée en regardant les résultats graphiques de différentes
+# Toutefois, Une matrice de transition qui tente de reproduire les proportions désirés à été déterminée en regardant les résultats graphiques de différentes
 # combinaison de valeur.
 # À partir de celle-ci, il est possible de visualiser les résultats de simulations déterministes et stochastiques :
 
-# _RÉSULTAT DU MODEL DÉTERMINISTE_
-
-##### A FINIR
-
-# global
-# zoom 1
-# zoom 2
-
-
-# _RÉSULTAT DU MODEL STOCHASTIQUE_
-
-
-#### A FIINIR
-# global
-# zoom 1
-# zoom 2
+# Lorsqu'on regarde le graphique avec 200 générations et 200 parcelles, il est possible d'observer que l'équilibre au sein de nos parcelles est atteint dès Le
+# début de la simulation. Selon cet équilibre, quasiment toutes les parcelles sont vide, quelques parcelles sont gazonnées, un peu de parcelles sont des buissons
+# lila et les buissons rose ne sont même pas représentés sur le graphique.
+# Si on fait un zoom sur le graphique, où on peut voir 20 parcelles et les 100 premières générations, il est possibles de voir que l'équilibre est atteinte
+# lorsqu'environ 3 parcelles sont gazonnées, 1 parcelle est lila et aucune n'est rose. Ces proportions ne respectent pas les proportions souhaitées. Il nous est
+# aussi possible d'oberver l'effet de la stochasticité sur ce graphique. La variance est forte pour les parcelles gazonnées, avec certains maxima atteingnant
+# plus de 10 parcelles avec l'état "gazon".
+# Si on fait un zoom plutôt sur les parcelles vides, donc les parcelles 180 à 200 pour les 100 premières générations, il est possible de voir les simulations
+# déterministes et stochastiques pour les parcelles vides. Les pics les plus bas correspondent avec les pics les plus hauts pour les parcelles gazonnées, atteignant
+# en dessous de 190 parcelles à l'état "vide". Par contre, la variance pour les parcelles vides et pour les parcelles gazonnées est similaire. Celle pour les
+# rose et lila, observable sur le premier zoom, est moindre. 
 
 
-# _GARENTIE DU RESPECT DES CRITÈRES FIXÉS_ 
+# _GARANTIE DU RESPECT DES CRITÈRES FIXÉS_ 
 # Afin d'évaluer l'ampleur des variations de proportion des états à l'équilibre dans les simulations stochastiques, la fonction "resultat" calcul de pourcentage de 
 # simulation où les critères fixés sont respectés, sur 100 simulations stochastique. 
 # Puisque nous n'avons pas réussi à déterminer une matrice de transition qui permet d'atteindre les critères par la simulation déterministe, il est impossible d'utiliser
 # la fonction " resultat" pour évaluer les résultats ( les critères sont respectés dans 0 % des cas). 
-# Si la matrice de transition aurait pu déterminés, cette fonction aurait permis de vérifier si l'effet stochastique était assez important pour 
-# Toutefois, en analysant les graphiques avec un zoom, l'ampleur de la variation dans les simulations stochastiques laissent croire que ..........
-
-#### A FINIR 
-
-# _EFFET DU NOMBRE DE PARCELLE À L'ÉTAT FINAL SUR LA STOCHASTICITÉ_
-# La matrice de transition utilisée favorise grandement les parcelles vide, alors que les arbuste ( rose et lila ) et le gazon représentais individuellement moins de 2%.
-# En analysant les zooms 1 et 2, il est possible de ......
-
-
-#### A FINIR 
-
-# La figure suivante représente des valeurs aléatoires:
-#hist(randn(100))
+# Si la matrice de transition aurait pu être déterminée, cette fonction aurait permis de vérifier si l'effet stochastique était assez important pour que nos parcelles
+# respectent les proportions souhaitées dans 80% des simulations.
+# En observant les graphiques que nous avons pu faire avec nos résultats, qui, nous le rappelons, ne sont pas adéquat à la situation demandée, il est possible de voir
+# que la stochasticité fait quand même effet, mais ne fait pas grandement varier les résultats obtenues par la simulation déterministe. De plus, son effet est similaire
+# pour tous les états, sauf pour les buissons, puisque leur représentation est presque inexistante. En effet, La matrice de transition utilisée favorise grandement les 
+# parcelles vides, alors que les arbuste ( rose et lila ) et le gazon représentais individuellement moins de 2%.  Il serait intéressant de voir l'effet que la 
+# stochasticité aurait si nous modifions la taille de la population (donc le nombre de parcelle) dès le départ.
 
 # # Discussion
 
@@ -482,15 +467,15 @@ current_figure()
 # Nous considérons que ce modèle suit le model de Markov (le nombre de parcelles dans chaque état dépend seulement de la génération actuelle, pas de celles d’avant).
 # Pour le model déterminisite, lorsque l'ont multiplie les états de la génération actuelle par la matrice de transition, le résultat est les états à la génération suivante.
 # Ainsi, il est possible d'en déduire qu'à l'équilibre : Vecteur_propre*T= vecteurs_propre. 
-# En d'autres mots, la distribution à l'équilibre  correspond au vecteur propre associé à la valeur propre 1 de la matrice de transition.
-#
+# En d'autres mots, la distribution à l'équilibre correspond au vecteur propre associé à la valeur propre 1 de la matrice de transition.
+
 # _ÉTAT INITIAL_
 # Nous détbutons avec un terrain vierge de 200 parcelles vides
 
 # _MATRICE DE_TRANSITION_
 # Il aurait été possible d'isoler la matrice de transition qui donne les proportions souhaités à l'équilibre mathématiquement. 
 # Toutefois, cette  matrice de transition de ce modèle de succession végétale doit également respecter des **contraintes biologiques**. 
-#
+
 # Lorsque nous avont choisit les valeurs de la matrice de transition, nous avons considérés que : 
 # 1. Une parcelle doit d'abord devenir gazon avant de pouvoir devenir arbuste
 # 2. Une parcelle d'une espèce d'arbuste ( Lilas ou Rose ), doit devenir vide pour pouvoir ensuite changer d'espèce. Par exemple, pour parcelle occupée par un rosier, 
@@ -499,23 +484,21 @@ current_figure()
 # 4. Le type de sol, la luminosité  et les conditions environnementale favorise d'avantage le lilas que le rosier. Les graines de Lilas germent 13 fois mieux que celle de rosier
 #   dans le gazon. De plus, la mortalité à chaque generation est de 80% pour le rosier, comparativement a 75% pour le lilas. 
 # 5. Lorsqu'un arbuste meurt, la parcelle devient vide, en raison de la perturbation des conditions du sol et des microorganismes de décomposition.
-#
-#
+
 # _EFFET DE STOCHASTICITÉ_ 
-#
-#  #### a FINIR : idée : nb de parcelle, nb de générations,  distribution des états ( bcp plus de vide), retour sur les observations graphiques...
-#
+# Nous n'avons pas réussit à utiliser le modèle stochastique de manière à rendre le modèle présenté ci-haut réaliste. Comme il est présenté, notre conclusion biologiquement
+# serait que la végétalisation du corridor électrique est quasi-impossible; même si de l'herbes établie sa présence, il est rare que ces parcelle se transforment en buisson
+# et encore plus rare qu'elles y restent un buisson. La grande majorité des parcelles trouvent leur équilibre lorsqu'elle sont vide. Si nous avions réussit à intégrer une
+# stochasticité avec une matrice de transition qui fait en sorte que les critères biologiques sont respectés dans 80% des cas, nous aurions pu conclure sur l'aspect 
+# plus réaliste du modèle. En effet, un modèle simplement déterministe ne reflète pas la réalité puisqu'il ne modélise pas les évènements soudains ou rares. 
+
+
 #_LIMITES DU MODEL_ 
 # D'une part, déterminer une matrice de transition qui permet d'atteindre suffisament les critères fixés, tout en respectant les contraintes biologiques oblige à faire certaines
 # concessions sur le réalisme du modèle. De plus, plusieurs éléments qui régule la succession végétale sont négligés, tel que les conditions environnementales, et l'écosystème 
 # du paysage ( prédateurs, polinisateurs, activités anthropiques, autres espèces végétales, effet des saisons...). Ces facteurs pourrait modifier la distribution des états et 
 # perturber l'équilibre. La supposition que la succession végétale suis le model de Markov peut également limiter le réalisme du model. En réalité, la présence d'une espèce 
-# d'arbuste dans une generation antérieur pourrait augmenter la chance que cette espèce d'arbuste resurgise en raison de sa banque de graine. 
-# 
-#  ### a FINIR : si tu as des idées a ajouter
-#
- 
+# d'arbuste dans une generation antérieur pourrait augmenter la chance que cette espèce d'arbuste resurgise en raison de sa banque de graine.
 
-# On peut aussi citer des références dans le document `references.bib`,
-# @ermentrout1993cellular -- la bibliographie sera ajoutée automatiquement à la
-# fin du document.
+# # Références
+# [1] @siebert2012state
