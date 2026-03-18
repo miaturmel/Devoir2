@@ -1,5 +1,3 @@
-### alllooo
-
 # ---
 # title: Devoir 2
 # repository: tpoisot/BIO245-modele
@@ -16,10 +14,59 @@
 
 # # Introduction
 
+# Le modèle présenté ci-dessous est un modèle "états-transitions". Ce genre de modèle décrit généralement 
+# les états que des individus peuvent représenter, les transitions qui permettent à ces individus de changer 
+# d'états et la probabilité que ces transitions se manifestent. Plusieurs facteurs peuvent être ajoutés à la
+# modélisation de ces intéractions, tel que des intéractions entre les états, ce qui modifie la probabilité
+# de transition d'un individu selon les états des voisins ou des transitions régulières sur un certain
+# interval de temps [1].
 
-# stochasticite
+# Le modèle présenté ci-dessous, tant qu'à lui, représente le modèle de Markov; un modèle qui ne prend pas
+# en compte les intéractions entre les états, mais admet des transitions régulières sur un interval de temps 
+# préalablement défini [1]. Le résultat de la simulation exécutée dans ce modèle devrait ainsi reproduire
+# une chaine de Markov qui explique la transitions entre deux états, qui est capable de prédire un état 
+# stationnaire et qui n'a pas de processus de mémoire (le modèle ne retient pas d'informations d'une transition
+# à une autre). C'est ainsi pour conserver l'intégrité des chaines de Markov que le modèle est non-paramétrique,
+# c'est-à-dire que la matrice d'états des parcelles et la matrice de transition modélisées séparémment. 
+
+# De plus, le modèle peut être représenté de deux manières : stochastique ou déterministe.
+
+# Pour le modèle stochastique, une augmentation de la taille de la population modélisée tend à diminuer 
+# l'effet de la stochasticité. Au contraire, une diminution de la taille de la population amplifie l'effet 
+# de la stochasticité. Ses points forts sont qu'il permet de visualiser l'effet de la stochasticité et qu'il
+# prend en compte des nombres entiers, ce qui permet au modèle d'être plus réaliste, selon la situation. Selon 
+# ce type de modèle, nous faisons plusieurs simulations qui n'ont pas toujours les mêmes résultats.
+
+# Pour le modèle déterministe suit l'équation suivante pour déterminer l'état des parcelles à la prochaine
+# génération : L'état de la parcelle à la génération suivante = l'état de la parcelle à la génération 
+# courante * la probabilité de transition associée à ce changement d'état. Dans ce modèle, la taille de 
+# la population est considérée comme infinie, puisqu'elle n'a pas d'effet sur le résultat de la simulation.
+# Ce modèle représente donc une dynamique des populations plutôt thérique, qui manque un peu de réaliste puisqu'il
+# ne simule pas la variance des résultats.
 
 # # Présentation du modèle
+
+# Ce modèle simule, à la base, 3 états finis de parcelles différentes : vide, herbes ou buisson. 
+# Ceux-ci peuvent être représentés dans le modèle par un vecteur représentant le nombre de parcelles dans 
+# chaque état à un temps donné. Ces états sont définis dans le contexte de l'aménagement d'un corridor
+# sous une ligne électrique à haute tension qui subit les effets de la transition végétale.
+
+# Les transitions entre ces états, tant qu'à elles, sont représentées par une matrice de transition qui est
+# composées des différents poids (probabilités) de chaque transition. Chaque ligne de la matrice de transition
+# doit avoir une somme de 1 afin de garder un nombre de parcelle égal à chaque génération.
+
+# Avec le modèle présenté ci-dessous, nous nous demandons : quelle est la matrice de transition qui permet,
+# en ajoutant un état, de respecter des critères d'abondance des états dans 80% des simulations. Ces critères 
+# d'abondance sont les suivant : à l'équilibre dans la simulation, il faut que 20% des parcelles soient
+# végétalisées et que parmi ces 20%, 30% soient des herbes, et 70% soient des buissons. Il faut ensuite
+# que la variété de buisson la moins abondante ne représente pas moins de 30% du total des parcelles occupées
+# par des buissons.
+
+# De plus, nous devons débuter la simulation avec un corridor de 200 parcelles vides, parmis lesquelles nous 
+# pouvons en végétaliser un maximum de 50 parcelles avec un mélange de buisson.
+
+# Notre hypothèse se présente sous la forme de la matrice du nombre de parcelle se trouvant dans chaque état, 
+# que nous supposons que le modèle respectera à l'équilibre pour respecter les critères énumérés ci-haut.
 
 # # Implémentation
 
@@ -29,9 +76,16 @@ import Random
 Random.seed!(123456)
 using CairoMakie
 using Distributions
-using LinearAlgebra
+using LinearAlgebra 
 
-# ## Documentation
+## Code 
+
+#FONCTIONS
+
+# Corrige la marice de transition, afin qu'elle suive le modèle de Markov ( programmation défensive )
+# Simulation Non paramétrique puisque l'historique des états n'intervient pas (les transitions précédentes n'affecte pas les prochaines)
+# La fonction "check_transition_matrice"  permet de normaliser la matrice, afin que la somme des probabilité de chaques transition possibles pour un état 
+# initial donné sois de 100% ( chaques lignes = 1)
 
 """
     check_transition_matrix!(arg1)
@@ -46,6 +100,19 @@ arg1 = une matrice de transition. Les lignes de la matrice représente des distr
 # Retour
 La fonction retourne la matrice de transition potentiellement normalisée pour que les sommes des valeurs de chaque ligne correspondent à 1.
 """
+
+function check_transition_matrix!(T)
+    for ligne in axes(T, 1) # Pour tout les lignes de la matrice T
+        if sum(T[ligne, :]) != 1 # Si la somme d'une ligne n'est pas égale à 1
+            @warn "La somme de la ligne $(ligne) n'est pas égale à 1 et a été modifiée"
+            T[ligne, :] ./= sum(T[ligne, :]) # On divise chaques valeurs dans ligne par la somme de la ligne
+        end
+    end
+    return T # Retourne la matrice corrigée au besoin
+end
+
+#  La fonction "Check_functions_arguments" vérifie  que l'ensemble des états initiaux et transitions possibles sont inclues ( Programmation défensive )
+# Ne corrige pas automatiquement, mais envoie un message d'avertissement qui signal une exception
 
 """
     check_function_arguments(arg1, arg2)
@@ -62,6 +129,21 @@ arg2 = la longueur d'un vecteur contenant les états possibles.
 La fonction ne retourne rien.
 """
 
+function check_function_arguments(transitions, states) 
+    if size(transitions, 1) != size(transitions, 2) # Si le nombre de ligne n'est pas égal au nombre de colone, renvoie un message d'avertissement 
+        throw("La matrice de transition n'est pas carrée")
+    end
+
+    if size(transitions, 1) != length(states) # Si le nombre de lignes de la matrice de transition n'est pas égal au nombres d'états possibles 
+        throw("Le nombre d'états ne correspond pas à la matrice de transition") #  renvoie un message d'avertissement
+    end 
+    return nothing 
+end
+
+# SIMULATION STOCHASTIC DU MODEL DE SUCCESION VÉGÉTALE
+# Timeseries est une matrice, les lignes sont les états et les colones sont les générations. Au début, seul la colone de la premiere 
+#génération est définie, les autres générations sont vides ( les états pour les générations suivantes ne sont pas calculés ).
+
 """
     _sim_stochastic!(arg1, arg2, arg3)
 
@@ -77,76 +159,6 @@ arg3 = l'indice de la génération courante sur laquelle la fonction s'applique.
 # Retour
 La fonction ne retourne rien, elle modifie une directement une matrice.
 """
-
-"""
-    _sim_determ!(arg1, arg2, arg3)
-
-La fonction effectue une modification déterministe d'une matrice des états pour chaque génération.
-La fonction multiplie les états des parcelles à la génération courante par les probabilités de transition
-contenues dans la matrice de transition, puis ajoute ces états de la prochaine génération à une matrice
-d'états pour chaque génération.
-
-# Arguments 
-arg1 = une matrice représentant les états de la parcelle pour chaque génération.
-arg2 = une matrice de transition.
-arg3 = l'indice de la génération courante sur laquelle la fonction s'applique.
-
-# Retour
-La fonction ne retourne rien, elle modifie une directement une matrice.
-"""
-
-"""
-    simulation(arg1, arg2; keyword1, keyword2)
-
-La fonction effectue les fonctions de programmation défensives établies plus tôt.
-Elle identifie ensuite le type de données sur lequel elle effectuera ses opérations et mes celles-ci 
-dans une matrice représentant les états de la parcelle pour chaque génération. La fonction détermine finalement
-si la simulation à réaliser doit être stochastique ou détermininiste et l'effectue pour chaque générations.
-
-# Arguments 
-arg1 = une matrice de transition.
-arg2 = la longueur d'un vecteur contenant les états possibles.
-keyword1 = un mot-clé représentant le nombre de génération sur lequel on effectue la simulation.
-keyword2 = un mot-clé pour identifier la manière dont la simulation est réalisée; de façon stochastique ou déterministe.
-
-# Retour
-La fonction retourne une matrice représentant le nombre de parcelles dans chaque état pour chaque génération.
-"""
-
-## Code 
-
-#FONCTIONS
-
-# Corrige la marice de transition, afin qu'elle suive le modèle de Markov ( programmation défensive )
-# Simulation Non paramétrique puisque l'historique des états n'intervient pas (les transitions précédentes n'affecte pas les prochaines)
-# La fonction "check_transition_matrice"  permet de normaliser la matrice, afin que la somme des probabilité de chaques transition possibles pour un état 
-# initial donné sois de 100% ( chaques lignes = 1)
-function check_transition_matrix!(T)
-    for ligne in axes(T, 1) # Pour tout les lignes de la matrice T
-        if sum(T[ligne, :]) != 1 # Si la somme d'une ligne n'est pas égale à 1
-            @warn "La somme de la ligne $(ligne) n'est pas égale à 1 et a été modifiée"
-            T[ligne, :] ./= sum(T[ligne, :]) # On divise chaques valeurs dans ligne par la somme de la ligne
-        end
-    end
-    return T # Retourne la matrice corrigée au besoin
-end
-
-#  La fonction "Check_functions_arguments" vérifie  que l'ensemble des états initiaux et transitions possibles sont inclues ( Programmation défensive )
-# Ne corrige pas automatiquement, mais envoie un message d'avertissement qui signal une exception
-function check_function_arguments(transitions, states) 
-    if size(transitions, 1) != size(transitions, 2) # Si le nombre de ligne n'est pas égal au nombre de colone, renvoie un message d'avertissement 
-        throw("La matrice de transition n'est pas carrée")
-    end
-
-    if size(transitions, 1) != length(states) # Si le nombre de lignes de la matrice de transition n'est pas égal au nombres d'états possibles 
-        throw("Le nombre d'états ne correspond pas à la matrice de transition") #  renvoie un message d'avertissement
-    end 
-    return nothing 
-end
-
-# SIMULATION STOCHASTIC DU MODEL DE SUCCESION VÉGÉTALE
-# Timeseries est une matrice, les lignes sont les états et les colones sont les générations. Au début, seul la colone de la premiere 
-#génération est définie, les autres générations sont vides ( les états pour les générations suivantes ne sont pas calculés ).
 
 function _sim_stochastic!(timeseries, transitions, generation) # ! signifie que la fonction modifie l'objet (la matrice), et ne fais pas seulement une copie 
     for state in axes(timeseries, 1) # Pour chaques lignes dans la matrice timeseries
@@ -166,6 +178,24 @@ function _sim_stochastic!(timeseries, transitions, generation) # ! signifie que 
 end
 
 # SIMULATION DÉTERMINISTE DU MODEL DE SUCCESSION VÉGÉTALE 
+
+"""
+    _sim_determ!(arg1, arg2, arg3)
+
+La fonction effectue une modification déterministe d'une matrice des états pour chaque génération.
+La fonction multiplie les états des parcelles à la génération courante par les probabilités de transition
+contenues dans la matrice de transition, puis ajoute ces états de la prochaine génération à une matrice
+d'états pour chaque génération.
+
+# Arguments 
+arg1 = une matrice représentant les états de la parcelle pour chaque génération.
+arg2 = une matrice de transition.
+arg3 = l'indice de la génération courante sur laquelle la fonction s'applique.
+
+# Retour
+La fonction ne retourne rien, elle modifie une directement une matrice.
+"""
+
 function _sim_determ!(timeseries, transitions, generation)
 
     pop_change = (timeseries[:, generation]' * transitions)'
@@ -185,6 +215,24 @@ end
 # de succession végétale ( stochastique et déterministe )
 # Les arguments de la fonction contiennent des mots clé ( generations = , stochastic = ), permettant de visualiser facilement l'effet de la variation 
 # des paramètres
+
+"""
+    simulation(arg1, arg2; keyword1, keyword2)
+
+La fonction effectue les fonctions de programmation défensives établies plus tôt.
+Elle identifie ensuite le type de données sur lequel elle effectuera ses opérations et mes celles-ci 
+dans une matrice représentant les états de la parcelle pour chaque génération. La fonction détermine finalement
+si la simulation à réaliser doit être stochastique ou détermininiste et l'effectue pour chaque générations.
+
+# Arguments 
+arg1 = une matrice de transition.
+arg2 = la longueur d'un vecteur contenant les états possibles.
+keyword1 = un mot-clé représentant le nombre de génération sur lequel on effectue la simulation.
+keyword2 = un mot-clé pour identifier la manière dont la simulation est réalisée; de façon stochastique ou déterministe.
+
+# Retour
+La fonction retourne une matrice représentant le nombre de parcelles dans chaque état pour chaque génération.
+"""
 
 function simulation(transitions, states; generations=200, stochastic=false) # peut indiquer directement le nb de generation souhaité et le type de simulation
 
@@ -235,8 +283,6 @@ T[3, :] = [30, 0, 70, 0] # une parcelle de Rose a 30% de chance de devenir vide,
 
 T[4, :] = [27, 0, 0, 73] # Une parcelle de lila à 27% de chance de devenir vide, aucune chance d'ête remplacée par du gazon ou lila 
 
-print(T)
-
 # CALCUL DES PROPORTIONS À L'ÉQUILIBRE (vecteur propre associé à la plus grande valeur propre)
 # À l'équilibre, les probabilité resteront les même lorsqu'ils sont multipliés par la matrice de transition 
 #  État à l'équilibre : Vecteur_propre*T= vecteurs_propre = T*valeurs_propre (1)
@@ -245,6 +291,21 @@ print(T)
 # buisson la moins abondante ne représente pas moins de 30% du total des parcelles occupées par des buissons le vecteur propre souhaité est :
 
 proportions_souhaitees = [0.8,0.06,0.05,0.09] # ( vide, gazon, Rose, Lila)
+
+"""
+    Verification_resultat_equilibre(arg1, arg2)
+
+La fonction vérifie que la matrice de transition permet d'atteindre les porportions de chaque état 
+possible lorsque la simulation atteint l'équilibre selon une certaine marge d'erreur.
+
+# Arguments 
+arg1 = une matrice de transition.
+arg2 = un vecteur représentant les proportions de chaque états souhaitées à l'équilibre.
+
+# Retour
+La fonction retourne les proportions calculées à l'équilibre et nous informe si la matrice de transition
+respecte ou non les proportions souhaitées.
+"""
 
 function Verification_resultat_equilibre(T,proportions_souhaitees)
   # Calcul les valeurs et vecteurs propre de la matrice de transition
@@ -266,9 +327,19 @@ function Verification_resultat_equilibre(T,proportions_souhaitees)
  return proportions_calcules
 end 
 
+"""
+    resultat(arg1, arg2)
 
+La fonction évalue le pourcentage de réussite de la simulation stochastique. Une réussite est 
+lorsque les critères de proportions de chaque état sont respectés.
 
+# Arguments 
+arg1 = une matrice représentant les états de la parcelle pour chaque génération.
+arg2 = un vecteur représentant les proportions de chaque états souhaitées à l'équilibre.
 
+# Retour
+La fonction retourne le pourcentage de réussite de la simulation stochastique.
+"""
 
 #PARAMETRE DU GRAPHIQUE
 
