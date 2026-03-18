@@ -275,13 +275,22 @@ T = zeros(Float64, states, states)
 # La fonction suivante permet de vérifier si la proportion des états à l'équilibre selon la matrice
 # donne le résultat indiqué dans les consignes
 
-T[1, :] = [300, 10, 0, 0] # une parcelle vide a 30 fois plus de chance de rester vide que de devenir gazon
+T[1, :] = [100, 1, 0, 0] 
 
-T[2, :] = [2, 50, 3, 4] # une parcelle de gazon a plus de chance de rester gazon. Elle a plus de chance de devenir Lila que Rose, et une petite chance de devenir vide
+T[2, :] = [80, 25, 1, 13] 
 
-T[3, :] = [30, 0, 70, 0] # une parcelle de Rose a 30% de chance de devenir vide, aucune chance d'être remplacée par du gazon ou lila
+T[3, :] = [80, 0, 20, 0] 
 
-T[4, :] = [27, 0, 0, 73] # Une parcelle de lila à 27% de chance de devenir vide, aucune chance d'ête remplacée par du gazon ou lila 
+T[4, :] = [77, 0, 0, 25] 
+
+# (visualise les proportions pour chaques état selon les valeurs mises dans la matrice )
+# Le choix manuel des valeurs de la matrice permet de s'assurer que les transitions d'État font du sens biologiquement, ( ex : pas directement vide a arbuste) 
+# et le calcul des proportions guide les choix  pour atteindre les proportion souhaité à l'équilibre
+
+T_normal = check_transition_matrix!(T)
+println(T_normal)
+
+proportions_souhaitees = [0.8,0.06,0.05,0.09] # ( vide, gazon, Rose, Lila)
 
 # CALCUL DES PROPORTIONS À L'ÉQUILIBRE (vecteur propre associé à la plus grande valeur propre)
 # À l'équilibre, les probabilité resteront les même lorsqu'ils sont multipliés par la matrice de transition 
@@ -289,8 +298,6 @@ T[4, :] = [27, 0, 0, 73] # Une parcelle de lila à 27% de chance de devenir vide
 # Cette fonction permet de vérifier la distribution des différents états à l'équilibre résultant des valeur posé dans la matrice de transition posés précedament 
 # pour que à l'équilibre 20% des parcelles soient végétalisées, et que parmi ces 20%, 30% soient des herbes, et 70% soient des buissons et ue la variété de
 # buisson la moins abondante ne représente pas moins de 30% du total des parcelles occupées par des buissons le vecteur propre souhaité est :
-
-proportions_souhaitees = [0.8,0.06,0.05,0.09] # ( vide, gazon, Rose, Lila)
 
 """
     Verification_resultat_equilibre(arg1, arg2)
@@ -307,25 +314,37 @@ La fonction retourne les proportions calculées à l'équilibre et nous informe 
 respecte ou non les proportions souhaitées.
 """
 
-function Verification_resultat_equilibre(T,proportions_souhaitees)
+function Verification_resultat_equilibre(T_normal,proportions_souhaitees, check_transition_matrix!)
+    
   # Calcul les valeurs et vecteurs propre de la matrice de transition
-  valeurs_propres, vecteurs_propres = eigen(T)
+  valeurs_propres, vecteurs_propres = eigen(T_normal)
   # Trouver l'indice du vecteur propre associé à la valeur propre qui se rapproche le plus de 1 (correspond au vecteur à l'équilibre)
-  indices_vecteur_propre_equilibre = findmin(abs.(valeurs_propres.-1)) 
+  _,indices_vecteur_propre_equilibre = findmin(abs.(valeurs_propres.-1)) # retourne juste l'index, pas la valeur qui est donné par la fonction findmin
   # normalise le vecteur propre pour que la somme de la ligne = 1 et faire une distribution de probabilité à l'équilibre 
-  proportions_calculees= vecteurs_propres[indices_vecteur_propre_equilibre]./sum(vecteurs_propres[indice_vecteurs_propre_equilibre])
-
+  proportions_calculees= vecteurs_propres[:,indices_vecteur_propre_equilibre]./sum(vecteurs_propres[:,indices_vecteur_propre_equilibre]) 
+  # les colones de la matrice vecteur_propre sont les vecteurs propres
 
   #Comparer avec la distribution souhaité
- marge_erreur = 0.20 # marge d'erreur de 20% accepté
-
+ marge_erreur = 0.05 # marge d'erreur de 1% accepté
+  
+ # Envoie un message d'erreur si les probabilités calculés pour chaques état a l'équilibre selon la matrice de transition ne correspond pas
+ # aux proportions souhaités, avec une marge d'erreur de 20% accepté
  if maximum(abs.(proportions_calculees.-proportions_souhaitees)) < marge_erreur
     println("La matrice de transition est adéquate")
    else 
-    throw("La matrice ne permet pas d'atteindre les proportions souhaités à l'équilibre")
+    println("La matrice ne permet pas d'atteindre les proportions souhaités à l'équilibre")
    end 
- return proportions_calcules
+ return proportions_calculees
 end 
+
+# Créer un objet avec le résultat de la fonction, ce qui permet de faire le message d'erreur si besoin
+proportions_calculees = Verification_resultat_equilibre(T,proportions_souhaitees)
+println(proportions_calculees) # Donne les proportions acceptable atteint avec la matrice de transition trouvée par essais-erreur
+
+# Une fois la matrice de transition déterminée, vérifier si les critères sont respectés dans au moins 80% des simulations
+# function Verification_critères_fixés (proportions_calculees, T, Timesseries, )
+
+# function resultats (timeseries, proportions_souhaitees)
 
 """
     resultat(arg1, arg2)
@@ -351,6 +370,11 @@ states_colors = [:grey40, :green, :pink, :purple]
 f = Figure()
 ax = Axis(f[1, 1], xlabel="Nb. générations", ylabel="Nb. parcelles")
 
+# Zoom sur 10 % des 200 parcelles ( gazon, lila, Rose)
+limits!(ax, 0, 100, 0, 20)
+
+# Zoom sur le vide  
+limits!(ax, 0, 100, 180, 200)
 
 # Superpose les 2 types de simulation sur le graphique, pour l'analyse
 # Stochastic simulation
@@ -379,6 +403,17 @@ current_figure()
 #hist(randn(100))
 
 # # Discussion
+
+# Approximation des valeurs de la matrice de transition 
+# Etat a l'équilibre des transition 
+# Respecter le sens biologique (les 0)
+# Respecter le sens mathématique des matrice de matrice
+# Verifier avec la fonction 
+# concession, ne sera jamais parfait, mais a quel point besoin d'etre parfait (limite du model)
+# Zoom sur y = 0-20 ( 1o% des 200 parcelles) pour étudier la stochasticité vs deterministe ( Gazon, Rose, Lila)
+# Zoom sur y = 180-200 ( parcelle vide)
+# Effet de la stochasticité 
+# DISCUSSION A COMMIT 
 
 # On peut aussi citer des références dans le document `references.bib`,
 # @ermentrout1993cellular -- la bibliographie sera ajoutée automatiquement à la
