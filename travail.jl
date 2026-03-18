@@ -274,18 +274,15 @@ T = zeros(Float64, states, states)
 # Nous essayons différentes valeurs de contenu de matrice pour nous approcher de la solution
 # La fonction suivante permet de vérifier si la proportion des états à l'équilibre selon la matrice
 # donne le résultat indiqué dans les consignes
+# Le choix manuel des valeurs de la matrice permet de s'assurer que les transitions d'État font du sens biologiquement
 
-T[1, :] = [100, 1, 0, 0] 
+T[1, :] = [100, 1, 0, 0] # Une parcelle vide à beaucoup plus de chance de rester vide que de devenir gazon
 
-T[2, :] = [80, 25, 1, 13] 
+T[2, :] = [80, 25, 1, 13] # Transition possible d'une parcelle gazon
 
-T[3, :] = [80, 0, 20, 0] 
+T[3, :] = [80, 0, 20, 0]  # Transition possible d'une parcelle Rose
 
-T[4, :] = [77, 0, 0, 25] 
-
-# (visualise les proportions pour chaques état selon les valeurs mises dans la matrice )
-# Le choix manuel des valeurs de la matrice permet de s'assurer que les transitions d'État font du sens biologiquement, ( ex : pas directement vide a arbuste) 
-# et le calcul des proportions guide les choix  pour atteindre les proportion souhaité à l'équilibre
+T[4, :] = [77, 0, 0, 25]  # Transition possible d'une parcelle Lila
 
 T_normal = check_transition_matrix!(T)
 println(T_normal)
@@ -294,7 +291,6 @@ proportions_souhaitees = [0.8,0.06,0.05,0.09] # ( vide, gazon, Rose, Lila)
 
 # CALCUL DES PROPORTIONS À L'ÉQUILIBRE (vecteur propre associé à la plus grande valeur propre)
 # À l'équilibre, les probabilité resteront les même lorsqu'ils sont multipliés par la matrice de transition 
-#  État à l'équilibre : Vecteur_propre*T= vecteurs_propre = T*valeurs_propre (1)
 # Cette fonction permet de vérifier la distribution des différents états à l'équilibre résultant des valeur posé dans la matrice de transition posés précedament 
 # pour que à l'équilibre 20% des parcelles soient végétalisées, et que parmi ces 20%, 30% soient des herbes, et 70% soient des buissons et ue la variété de
 # buisson la moins abondante ne représente pas moins de 30% du total des parcelles occupées par des buissons le vecteur propre souhaité est :
@@ -306,7 +302,7 @@ La fonction vérifie que la matrice de transition permet d'atteindre les porport
 possible lorsque la simulation atteint l'équilibre selon une certaine marge d'erreur.
 
 # Arguments 
-arg1 = une matrice de transition.
+arg1 = une matrice de transition normalisée .
 arg2 = un vecteur représentant les proportions de chaque états souhaitées à l'équilibre.
 
 # Retour
@@ -314,21 +310,20 @@ La fonction retourne les proportions calculées à l'équilibre et nous informe 
 respecte ou non les proportions souhaitées.
 """
 
-function Verification_resultat_equilibre(T_normal,proportions_souhaitees, check_transition_matrix!)
+function Verification_resultat_equilibre(T_normal,proportions_souhaitees)
     
   # Calcul les valeurs et vecteurs propre de la matrice de transition
   valeurs_propres, vecteurs_propres = eigen(T_normal)
   # Trouver l'indice du vecteur propre associé à la valeur propre qui se rapproche le plus de 1 (correspond au vecteur à l'équilibre)
   _,indices_vecteur_propre_equilibre = findmin(abs.(valeurs_propres.-1)) # retourne juste l'index, pas la valeur qui est donné par la fonction findmin
   # normalise le vecteur propre pour que la somme de la ligne = 1 et faire une distribution de probabilité à l'équilibre 
-  proportions_calculees= vecteurs_propres[:,indices_vecteur_propre_equilibre]./sum(vecteurs_propres[:,indices_vecteur_propre_equilibre]) 
-  # les colones de la matrice vecteur_propre sont les vecteurs propres
+  proportions_calculees= (vecteurs_propres[:,indices_vecteur_propre_equilibre])./sum(vecteurs_propres[:,indices_vecteur_propre_equilibre]) 
 
   #Comparer avec la distribution souhaité
- marge_erreur = 0.05 # marge d'erreur de 1% accepté
+ marge_erreur = 0.05 # marge d'erreur de 5% accepté
   
  # Envoie un message d'erreur si les probabilités calculés pour chaques état a l'équilibre selon la matrice de transition ne correspond pas
- # aux proportions souhaités, avec une marge d'erreur de 20% accepté
+ # aux proportions souhaités, avec une marge d'erreur de 5% accepté
  if maximum(abs.(proportions_calculees.-proportions_souhaitees)) < marge_erreur
     println("La matrice de transition est adéquate")
    else 
@@ -338,7 +333,7 @@ function Verification_resultat_equilibre(T_normal,proportions_souhaitees, check_
 end 
 
 # Créer un objet avec le résultat de la fonction, ce qui permet de faire le message d'erreur si besoin
-proportions_calculees = Verification_resultat_equilibre(T,proportions_souhaitees)
+proportions_calculees = Verification_resultat_equilibre(T_normal,proportions_souhaitees)
 println(proportions_calculees) # Donne les proportions acceptable atteint avec la matrice de transition trouvée par essais-erreur
 
 # Une fois la matrice de transition déterminée, vérifier si les critères sont respectés dans au moins 80% des simulations
@@ -360,6 +355,38 @@ arg2 = un vecteur représentant les proportions de chaque états souhaitées à 
 La fonction retourne le pourcentage de réussite de la simulation stochastique.
 """
 
+function resultat(timeseries, proportion_souhaitees)
+
+    #objet qui stock le nombre de fois que les critères fixés sont respectés 
+    resultat_ok = 0
+
+    for _ in 1:100 #répéter la simulation stochaistique 100 fois
+        sto_sim = simulation( T, initial_states; stochastic = true, generations = 200)
+
+        derniere_gen = sto_sim[:, end] # derniere generation de chaques simulation, donc état a l'équilibre
+        proportion_last_gen = derniere_gen./sum(derniere_gen) # normaliser pour avoir les pourcentage de chaque état
+
+        # Comparer avec les proportions souhaités à l'équilibre
+       marge_erreur = 0.01 # marge d'erreur de 1% accepté
+       
+       if maximum(abs.(proportion_last_gen .- proportions_souhaitees)) < marge_erreur 
+        # si la différence entre l'état a l'équilibre d'une simulation et l'état à l'équilibre souhaité est inférieur à 1%
+        resultat_ok =+ 1 # considéré dans les simulations réussie
+       end 
+    end 
+
+  # Calcul du pourcentage de simulation " réussie", qui atteint les critères fixés
+
+  pourcentage_reussite = resultat_ok / 100 # combien de fois de fois la simulation est réussie sur les 100 simulation stochastiques
+
+  return pourcentage_reussite
+
+end 
+
+# Affiche le résultat de la fonction, et indique si la stochasticité permet de maintenir l'atteinte des critère plus ou moins de 80% des simulations
+pourcentage_reussite = resultat(timeseries, proportions_souhaitees) # objet avec le pourcentage de réussite 
+println(" Les critère fixés sont atteints dans ",(pourcentage_reussite), "% des simulations")
+
 #PARAMETRE DU GRAPHIQUE
 
 #Légende et couleurs associé
@@ -370,11 +397,11 @@ states_colors = [:grey40, :green, :pink, :purple]
 f = Figure()
 ax = Axis(f[1, 1], xlabel="Nb. générations", ylabel="Nb. parcelles")
 
-# Zoom sur 10 % des 200 parcelles ( gazon, lila, Rose)
-limits!(ax, 0, 100, 0, 20)
+# Zoom 1 sur 10 % des 200 parcelles ( gazon, lila, Rose)
+ limits!(ax, 0, 100, 0, 20)
 
-# Zoom sur le vide  
-limits!(ax, 0, 100, 180, 200)
+# Zoom 2 sur les parcelles vide  
+# limits!(ax, 0, 100, 180, 200)
 
 # Superpose les 2 types de simulation sur le graphique, pour l'analyse
 # Stochastic simulation
@@ -398,22 +425,96 @@ current_figure()
 
 # # Présentation des résultats
 
-# La figure suivante représente des valeurs aléatoires:
+# _MATRICE DE TRANSITION DES ESPÈCES QUI PERMET D'OBTENIR LES CRITÈRES FIXÉS_
+# Aucune combinaison de valeurs essayé dans la matrice de transition n'as permit d'atteindre les proportions de chaques états voulues. En effet, la fonction 
+# " Verification_resultat_equilibre" retourne des états à l'équilibre dans une proportion de 
+# [0.24999999999999997, 0.25000000000000006, 0.24999999999999997, 0.24999999999999997] 
+# représentant respectivement les parcelles vides, gazon, rose et lila peut importe les valeurs mise dans la matrice. 
+# Un probléme empêche donc la fonction de guider le choix de valeurs dans la matrice de transition. Si  " Verification_resultat_equilibre" serait fonctionnelle, 
+# il serait possible de trouver des valeurs à l'équilibre se rapprochant des critères fixés. 
 
+
+# Toutefois, Une matrice de transition qui tente à de reproduire les proportions désirés à été déterminée en regardant les résultats graphiques de différentes
+# combinaison de valeur.
+# À partir de celle-ci, il est possible de visualiser les résultats de simulations déterministes et stochastiques :
+
+# _RÉSULTAT DU MODEL DÉTERMINISTE_
+
+##### A FINIR
+
+# global
+# zoom 1
+# zoom 2
+
+
+# _RÉSULTAT DU MODEL STOCHASTIQUE_
+
+
+#### A FIINIR
+# global
+# zoom 1
+# zoom 2
+
+
+# _GARENTIE DU RESPECT DES CRITÈRES FIXÉS_ 
+# Afin d'évaluer l'ampleur des variations de proportion des états à l'équilibre dans les simulations stochastiques, la fonction "resultat" calcul de pourcentage de 
+# simulation où les critères fixés sont respectés, sur 100 simulations stochastique. 
+# Puisque nous n'avons pas réussi à déterminer une matrice de transition qui permet d'atteindre les critères par la simulation déterministe, il est impossible d'utiliser
+# la fonction " resultat" pour évaluer les résultats ( les critères sont respectés dans 0 % des cas). 
+# Si la matrice de transition aurait pu déterminés, cette fonction aurait permis de vérifier si l'effet stochastique était assez important pour 
+# Toutefois, en analysant les graphiques avec un zoom, l'ampleur de la variation dans les simulations stochastiques laissent croire que ..........
+
+#### A FINIR 
+
+# _EFFET DU NOMBRE DE PARCELLE À L'ÉTAT FINAL SUR LA STOCHASTICITÉ_
+# La matrice de transition utilisée favorise grandement les parcelles vide, alors que les arbuste ( rose et lila ) et le gazon représentais individuellement moins de 2%.
+# En analysant les zooms 1 et 2, il est possible de ......
+
+
+#### A FINIR 
+
+# La figure suivante représente des valeurs aléatoires:
 #hist(randn(100))
 
 # # Discussion
 
-# Approximation des valeurs de la matrice de transition 
-# Etat a l'équilibre des transition 
-# Respecter le sens biologique (les 0)
-# Respecter le sens mathématique des matrice de matrice
-# Verifier avec la fonction 
-# concession, ne sera jamais parfait, mais a quel point besoin d'etre parfait (limite du model)
-# Zoom sur y = 0-20 ( 1o% des 200 parcelles) pour étudier la stochasticité vs deterministe ( Gazon, Rose, Lila)
-# Zoom sur y = 180-200 ( parcelle vide)
-# Effet de la stochasticité 
-# DISCUSSION A COMMIT 
+# _ÉTAT À L'ÉQUILIBRE_
+# Nous considérons que ce modèle suit le model de Markov (le nombre de parcelles dans chaque état dépend seulement de la génération actuelle, pas de celles d’avant).
+# Pour le model déterminisite, lorsque l'ont multiplie les états de la génération actuelle par la matrice de transition, le résultat est les états à la génération suivante.
+# Ainsi, il est possible d'en déduire qu'à l'équilibre : Vecteur_propre*T= vecteurs_propre. 
+# En d'autres mots, la distribution à l'équilibre  correspond au vecteur propre associé à la valeur propre 1 de la matrice de transition.
+#
+# _ÉTAT INITIAL_
+# Nous détbutons avec un terrain vierge de 200 parcelles vides
+
+# _MATRICE DE_TRANSITION_
+# Il aurait été possible d'isoler la matrice de transition qui donne les proportions souhaités à l'équilibre mathématiquement. 
+# Toutefois, cette  matrice de transition de ce modèle de succession végétale doit également respecter des **contraintes biologiques**. 
+#
+# Lorsque nous avont choisit les valeurs de la matrice de transition, nous avons considérés que : 
+# 1. Une parcelle doit d'abord devenir gazon avant de pouvoir devenir arbuste
+# 2. Une parcelle d'une espèce d'arbuste ( Lilas ou Rose ), doit devenir vide pour pouvoir ensuite changer d'espèce. Par exemple, pour parcelle occupée par un rosier, 
+#   le rosier doit mourrir pour qu'un lilas puisse y pousser dans les prochaines generations. On peut ainsi représenter la compétition interspécifique
+# 3. Le gazon a plus de chance de mourrir qu'être remplacé par un arbuste. En effet, dans ce terrain rasé par les activité anthropiques, le sol est sèche et pauvre.
+# 4. Le type de sol, la luminosité  et les conditions environnementale favorise d'avantage le lilas que le rosier. Les graines de Lilas germent 13 fois mieux que celle de rosier
+#   dans le gazon. De plus, la mortalité à chaque generation est de 80% pour le rosier, comparativement a 75% pour le lilas. 
+# 5. Lorsqu'un arbuste meurt, la parcelle devient vide, en raison de la perturbation des conditions du sol et des microorganismes de décomposition.
+#
+#
+# _EFFET DE STOCHASTICITÉ_ 
+#
+#  #### a FINIR : idée : nb de parcelle, nb de générations,  distribution des états ( bcp plus de vide), retour sur les observations graphiques...
+#
+#_LIMITES DU MODEL_ 
+# D'une part, déterminer une matrice de transition qui permet d'atteindre suffisament les critères fixés, tout en respectant les contraintes biologiques oblige à faire certaines
+# concessions sur le réalisme du modèle. De plus, plusieurs éléments qui régule la succession végétale sont négligés, tel que les conditions environnementales, et l'écosystème 
+# du paysage ( prédateurs, polinisateurs, activités anthropiques, autres espèces végétales, effet des saisons...). Ces facteurs pourrait modifier la distribution des états et 
+# perturber l'équilibre. La supposition que la succession végétale suis le model de Markov peut également limiter le réalisme du model. En réalité, la présence d'une espèce 
+# d'arbuste dans une generation antérieur pourrait augmenter la chance que cette espèce d'arbuste resurgise en raison de sa banque de graine. 
+# 
+#  ### a FINIR : si tu as des idées a ajouter
+#
+ 
 
 # On peut aussi citer des références dans le document `references.bib`,
 # @ermentrout1993cellular -- la bibliographie sera ajoutée automatiquement à la
