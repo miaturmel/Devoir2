@@ -396,10 +396,10 @@ f = Figure()
 ax = Axis(f[1, 1], xlabel="Nb. générations", ylabel="Nb. parcelles")
 
 # Zoom 1 sur 10 % des 200 parcelles ( gazon, lila, Rose)
- limits!(ax, 0, 100, 0, 20)
+# limits!(ax, 0, 100, 0, 20)
 
 # Zoom 2 sur les parcelles vide  
-limits!(ax, 0, 100, 180, 200)
+# limits!(ax, 0, 100, 180, 200)
 
 # Superpose les 2 types de simulation sur le graphique, pour l'analyse
 # Stochastic simulation
