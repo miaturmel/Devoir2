@@ -80,8 +80,7 @@ using LinearAlgebra
 
 ## Code 
 
-# FONCTIONS
-
+## FONCTIONS
 # Corrige la marice de transition, afin qu'elle suive le modèle de Markov ( programmation défensive )
 # Simulation Non paramétrique puisque l'historique des états n'intervient pas (les transitions précédentes n'affecte pas les prochaines)
 # La fonction "check_transition_matrice"  permet de normaliser la matrice, afin que la somme des probabilité de chaques transition possibles pour un état 
@@ -101,16 +100,16 @@ arg1 = une matrice de transition. Les lignes de la matrice représente des distr
 La fonction retourne la matrice de transition potentiellement normalisée pour que les sommes des valeurs de chaque ligne correspondent à 1.
 """
 function check_transition_matrix!(T)
-    for ligne in axes(T, 1) # Pour tout les lignes de la matrice T
-        if sum(T[ligne, :]) != 1 # Si la somme d'une ligne n'est pas égale à 1
+    for ligne in axes(T, 1)
+        if sum(T[ligne, :]) != 1
             @warn "La somme de la ligne $(ligne) n'est pas égale à 1 et a été modifiée"
-            T[ligne, :] ./= sum(T[ligne, :]) # On divise chaques valeurs dans ligne par la somme de la ligne
+            T[ligne, :] ./= sum(T[ligne, :])
         end
     end
-    return T # Retourne la matrice corrigée au besoin
+    return T 
 end
 
-#  La fonction "Check_functions_arguments" vérifie  que l'ensemble des états initiaux et transitions possibles sont inclues ( Programmation défensive )
+# La fonction "Check_functions_arguments" vérifie  que l'ensemble des états initiaux et transitions possibles sont inclues ( Programmation défensive )
 # Ne corrige pas automatiquement, mais envoie un message d'avertissement qui signal une exception
 
 """
@@ -128,19 +127,24 @@ arg2 = la longueur d'un vecteur contenant les états possibles.
 La fonction ne retourne rien.
 """
 function check_function_arguments(transitions, states) 
-    if size(transitions, 1) != size(transitions, 2) # Si le nombre de ligne n'est pas égal au nombre de colone, renvoie un message d'avertissement 
+    if size(transitions, 1) != size(transitions, 2) 
         throw("La matrice de transition n'est pas carrée")
     end
 
-    if size(transitions, 1) != length(states) # Si le nombre de lignes de la matrice de transition n'est pas égal au nombres d'états possibles 
-        throw("Le nombre d'états ne correspond pas à la matrice de transition") #  renvoie un message d'avertissement
+    if size(transitions, 1) != length(states)
+        throw("Le nombre d'états ne correspond pas à la matrice de transition")
     end 
     return nothing 
 end
 
-# SIMULATION STOCHASTIC DU MODEL DE SUCCESION VÉGÉTALE
+## SIMULATION STOCHASTIC DU MODEL DE SUCCESION VÉGÉTALE
 # Timeseries est une matrice, les lignes sont les états et les colones sont les générations. Au début, seul la colone de la premiere 
-#génération est définie, les autres générations sont vides ( les états pour les générations suivantes ne sont pas calculés ).
+# génération est définie, les autres générations sont vides ( les états pour les générations suivantes ne sont pas calculés ).
+# Applique les probabilités multinomiales de transition sur le nombre de parcelle de chaque état à la génération t ( courante ), afin de déterminer 
+# le nombre de parcelles pour chaques états à la génération t+1 ( suivante )
+# rand permet de sélectionner au hasard quelles parcelles vont subir quelles changement d'état (en respectant les  proabilité weighted de transition )
+# remplis la matrice timeseries avec les nouveaux états pour chaques générations en fonction du nouveau état déterminé par "pop_change" appliqué sur la
+# génération précédente
 
 """
     _sim_stochastic!(arg1, arg2, arg3)
@@ -157,24 +161,18 @@ arg3 = l'indice de la génération courante sur laquelle la fonction s'applique.
 # Retour
 La fonction ne retourne rien, elle modifie une directement une matrice.
 """
-function _sim_stochastic!(timeseries, transitions, generation) # ! signifie que la fonction modifie l'objet (la matrice), et ne fais pas seulement une copie 
-    for state in axes(timeseries, 1) # Pour chaques lignes dans la matrice timeseries
-
+function _sim_stochastic!(timeseries, transitions, generation) 
+    for state in axes(timeseries, 1)
         pop_change = rand(Multinomial(timeseries[state, generation], transitions[state, :])) 
-
-        # Applique les probabilités multinomiales de transition sur le nombre de parcelle de chaque état à la génération t ( courante ), afin de déterminer 
-        #le nombre de parcelles pour chaques états à la génération t+1 ( suivante )
-        # rand permet de sélectionner au hasard quelles parcelles vont subir quelles changement d'état (en respectant les  proabilité weighted de transition )
-
         timeseries[:, generation+1] .+= pop_change 
-
-     # remplis la matrice timeseries avec les nouveaux états pour chaques générations en fonction du nouveau état déterminé par "pop_change" appliqué sur la
-     # génération précédente
-
     end
 end
 
-# SIMULATION DÉTERMINISTE DU MODEL DE SUCCESSION VÉGÉTALE 
+## SIMULATION DÉTERMINISTE DU MODEL DE SUCCESSION VÉGÉTALE 
+# Opération sur matrice, calcul le nombre de parcelles pour chaques nouveau état à la génération suivante (t+1) à  partir des probabilité de la matrice 
+# de transition appliqueée sur les parcelles de la génération actuelle (t)
+# remplis la matrice timeseries avec les nouveaux états pour chaques générations en fonction du nouveau état déterminé par "pop_change" appliqué sur la 
+# génération précédente
 
 """
     _sim_determ!(arg1, arg2, arg3)
@@ -193,20 +191,11 @@ arg3 = l'indice de la génération courante sur laquelle la fonction s'applique.
 La fonction ne retourne rien, elle modifie une directement une matrice.
 """
 function _sim_determ!(timeseries, transitions, generation)
-
     pop_change = (timeseries[:, generation]' * transitions)'
-
-    # Opération sur matrice, calcul le nombre de parcelles pour chaques nouveau état à la génération suivante (t+1) à  partir des probabilité de la matrice 
-    # de transition appliqueée sur les parcelles de la génération actuelle (t)
-
     timeseries[:, generation+1] .= pop_change
-
-    # remplis la matrice timeseries avec les nouveaux états pour chaques générations en fonction du nouveau état déterminé par "pop_change" appliqué sur la 
-    #génération précédente
-
 end
 
-# SIMULATION FINALE
+## SIMULATION FINALE
 # Permet de comparer les effet du nombre de generation sur les deux simulations en même temps ainsi que les différences entre les 2 simulations
 # de succession végétale ( stochastique et déterministe )
 # Les arguments de la fonction contiennent des mots clé ( generations = , stochastic = ), permettant de visualiser facilement l'effet de la variation 
@@ -229,25 +218,19 @@ keyword2 = un mot-clé pour identifier la manière dont la simulation est réali
 # Retour
 La fonction retourne une matrice représentant le nombre de parcelles dans chaque état pour chaque génération.
 """
-function simulation(transitions, states; generations=200, stochastic=false) # peut indiquer directement le nb de generation souhaité et le type de simulation
+function simulation(transitions, states; generations=200, stochastic=false)
 
-    # Fonctions  " programmation défensive " , s'assurer que respecte model de Markov et que matrice est complète 
     check_transition_matrix!(transitions) 
     check_function_arguments(transitions, states)
 
-     # Si les données sont stochastique, les données sont des nombres entiers arrondit à la baisse, si non ( déterministe ) ce sont des nombres à virgule
     _data_type = stochastic ? Int64 : Float32 
    
-    # Créer la matrice vide qui va stocker l'information sur le nombre de parcelle de chaques, pour chaques générations ( lignes = états, colones = generations )
     timeseries = zeros(_data_type, length(states), generations + 1)
 
-    timeseries[:, 1] = states # première dimension (lignes) correspondent aux états
-
-    # Si l'aurgment dans les mots clé est "stochastique = true ", faire appelle à la fonction  _sim_stochastic!, sinon faire appelle a la fonction  _sim_determ!  
+    timeseries[:, 1] = states 
+  
     _sim_function! = stochastic ? _sim_stochastic! : _sim_determ!  
 
-    # Pour tout les génération suivant la génération initiale, appliquer la simulation  (stochaistique ou deterministe, celon l'argument)
-    # Et retourner la matrice qui indique le nombre de parcelle pour chaques états, pour toutes les générations 
     for generation in Base.OneTo(generations)
         _sim_function!(timeseries, transitions, generation)
     end
@@ -255,15 +238,18 @@ function simulation(transitions, states; generations=200, stochastic=false) # pe
     return timeseries
 end
 
-# PARAMETRES 
+## PARAMETRES 
 
 # Vecteur avec les états initiaux  : Vide, gazon, Rose, Lila 
-initial_states = [200, 0, 0, 0]  # Commence avec 200 parcelles vides ( petit effectif )
-# L'effet de stochasticité est grand, puisque la population est petite
-states = length(initial_states) # nombres d'états possibles 
 
+initial_states = [200, 0, 0, 0] 
+
+# L'effet de stochasticité est grand, puisque la population est petite
+
+states = length(initial_states)
 
 # Création de la matrice de transition
+
 T = zeros(Float64, states, states)
 
 # Nous essayons différentes valeurs de contenu de matrice pour nous approcher de la solution
@@ -271,20 +257,20 @@ T = zeros(Float64, states, states)
 # donne le résultat indiqué dans les consignes
 # Le choix manuel des valeurs de la matrice permet de s'assurer que les transitions d'État font du sens biologiquement
 
-T[1, :] = [100, 1, 0, 0] # Une parcelle vide à beaucoup plus de chance de rester vide que de devenir gazon
+T[1, :] = [100, 1, 0, 0]
 
-T[2, :] = [80, 25, 1, 13] # Transition possible d'une parcelle gazon
+T[2, :] = [80, 25, 1, 13] 
 
-T[3, :] = [80, 0, 20, 0]  # Transition possible d'une parcelle Rose
+T[3, :] = [80, 0, 20, 0]  
 
-T[4, :] = [77, 0, 0, 25]  # Transition possible d'une parcelle Lila
+T[4, :] = [77, 0, 0, 25] 
 
 T_normal = check_transition_matrix!(T)
 println(T_normal)
 
-proportions_souhaitees = [0.8,0.06,0.05,0.09] # ( vide, gazon, Rose, Lila)
+proportions_souhaitees = [0.8,0.06,0.05,0.09] ## ( vide, gazon, Rose, Lila)
 
-# CALCUL DES PROPORTIONS À L'ÉQUILIBRE (vecteur propre associé à la plus grande valeur propre)
+## CALCUL DES PROPORTIONS À L'ÉQUILIBRE (vecteur propre associé à la plus grande valeur propre)
 # À l'équilibre, les probabilité resteront les même lorsqu'ils sont multipliés par la matrice de transition 
 # Cette fonction permet de vérifier la distribution des différents états à l'équilibre résultant des valeur posé dans la matrice de transition posés précedament 
 # pour que à l'équilibre 20% des parcelles soient végétalisées, et que parmi ces 20%, 30% soient des herbes, et 70% soient des buissons et ue la variété de
@@ -306,32 +292,30 @@ respecte ou non les proportions souhaitées.
 """
 function Verification_resultat_equilibre(T_normal,proportions_souhaitees)
     
-  # Calcul les valeurs et vecteurs propre de la matrice de transition
-  valeurs_propres, vecteurs_propres = eigen(T_normal)
-  # Trouver l'indice du vecteur propre associé à la valeur propre qui se rapproche le plus de 1 (correspond au vecteur à l'équilibre)
-  _,indices_vecteur_propre_equilibre = findmin(abs.(valeurs_propres.-1)) # retourne juste l'index, pas la valeur qui est donné par la fonction findmin
-  # normalise le vecteur propre pour que la somme de la ligne = 1 et faire une distribution de probabilité à l'équilibre 
-  proportions_calculees= (vecteurs_propres[:,indices_vecteur_propre_equilibre])./sum(vecteurs_propres[:,indices_vecteur_propre_equilibre]) 
-
-  #Comparer avec la distribution souhaité
- marge_erreur = 0.05 # marge d'erreur de 5% accepté
+    valeurs_propres, vecteurs_propres = eigen(T_normal)
   
- # Envoie un message d'erreur si les probabilités calculés pour chaques état a l'équilibre selon la matrice de transition ne correspond pas
- # aux proportions souhaités, avec une marge d'erreur de 5% accepté
- if maximum(abs.(proportions_calculees.-proportions_souhaitees)) < marge_erreur
-    println("La matrice de transition est adéquate")
-   else 
-    println("La matrice ne permet pas d'atteindre les proportions souhaités à l'équilibre")
-   end 
- return proportions_calculees
+    _,indices_vecteur_propre_equilibre = findmin(abs.(valeurs_propres.-1))  
+    
+    proportions_calculees= (vecteurs_propres[:,indices_vecteur_propre_equilibre])./sum(vecteurs_propres[:,indices_vecteur_propre_equilibre]) 
+    
+    marge_erreur = 0.05
+ 
+    if maximum(abs.(proportions_calculees.-proportions_souhaitees)) < marge_erreur
+        println("La matrice de transition est adéquate")
+    else 
+        println("La matrice ne permet pas d'atteindre les proportions souhaités à l'équilibre")
+    end 
+    
+    return proportions_calculees
 end 
 
 # Créer un objet avec le résultat de la fonction, ce qui permet de faire le message d'erreur si besoin
+# Donne les proportions acceptable atteint avec la matrice de transition trouvée par essais-erreur
+
 proportions_calculees = Verification_resultat_equilibre(T_normal,proportions_souhaitees)
-println(proportions_calculees) # Donne les proportions acceptable atteint avec la matrice de transition trouvée par essais-erreur
+println(proportions_calculees)
 
 # Une fois la matrice de transition déterminée, vérifier si les critères sont respectés dans au moins 80% des simulations
-# function Verification_critères_fixés (proportions_calculees, T, Timesseries, )
 
 """
     resultat(arg1, arg2)
@@ -348,55 +332,57 @@ La fonction retourne le pourcentage de réussite de la simulation stochastique.
 """
 function resultat(timeseries, proportion_souhaitees)
 
-    #objet qui stock le nombre de fois que les critères fixés sont respectés 
     resultat_ok = 0
 
-    for _ in 1:100 #répéter la simulation stochaistique 100 fois
+    for _ in 1:100
         sto_sim = simulation( T, initial_states; stochastic = true, generations = 200)
 
-        derniere_gen = sto_sim[:, end] # derniere generation de chaques simulation, donc état a l'équilibre
-        proportion_last_gen = derniere_gen./sum(derniere_gen) # normaliser pour avoir les pourcentage de chaque état
-
-        # Comparer avec les proportions souhaités à l'équilibre
-       marge_erreur = 0.01 # marge d'erreur de 1% accepté
+        derniere_gen = sto_sim[:, end] 
        
-       if maximum(abs.(proportion_last_gen .- proportions_souhaitees)) < marge_erreur 
-        # si la différence entre l'état a l'équilibre d'une simulation et l'état à l'équilibre souhaité est inférieur à 1%
-        resultat_ok =+ 1 # considéré dans les simulations réussie
-       end 
+        proportion_last_gen = derniere_gen./sum(derniere_gen)
+
+        marge_erreur = 0.01 
+       
+        if maximum(abs.(proportion_last_gen .- proportions_souhaitees)) < marge_erreur 
+            resultat_ok =+ 1
+         end 
     end 
 
-  # Calcul du pourcentage de simulation " réussie", qui atteint les critères fixés
+    pourcentage_reussite = resultat_ok / 100
 
-  pourcentage_reussite = resultat_ok / 100 # combien de fois de fois la simulation est réussie sur les 100 simulation stochastiques
-
-  return pourcentage_reussite
+    return pourcentage_reussite
 
 end 
 
 # Affiche le résultat de la fonction, et indique si la stochasticité permet de maintenir l'atteinte des critère plus ou moins de 80% des simulations
-pourcentage_reussite = resultat(timeseries, proportions_souhaitees) # objet avec le pourcentage de réussite 
+
+pourcentage_reussite = resultat(timeseries, proportions_souhaitees)
 println(" Les critère fixés sont atteints dans ",(pourcentage_reussite), "% des simulations")
 
-#PARAMETRE DU GRAPHIQUE
+## PARAMETRE DU GRAPHIQUE
 
-#Légende et couleurs associé
+# Légende et couleurs associé
+
 states_names = ["vide", "Gazon", "Rose","Lila"]
 states_colors = [:grey40, :green, :pink, :purple]
 
 # Simulations sur le graphique
+
 f = Figure()
 ax = Axis(f[1, 1], xlabel="Nb. générations", ylabel="Nb. parcelles")
 
 # Zoom 1 sur 10 % des 200 parcelles ( gazon, lila, Rose)
+
 # limits!(ax, 0, 100, 0, 20)
 
 # Zoom 2 sur les parcelles vide  
+
 # limits!(ax, 0, 100, 180, 200)
 
 # Superpose les 2 types de simulation sur le graphique, pour l'analyse
 # Stochastic simulation
-for _ in 1:100 # répéter la simulation stochaistique 100 fois
+
+for _ in 1:100
     sto_sim = simulation(T, initial_states; stochastic=true, generations=200)
     for i in eachindex(initial_states)
         lines!(ax, sto_sim[i, :], color=states_colors[i], alpha=0.1)
@@ -404,6 +390,7 @@ for _ in 1:100 # répéter la simulation stochaistique 100 fois
 end
 
 # Deterministic simulation
+
 det_sim = simulation(T, initial_states; stochastic=false, generations=200)
 for i in eachindex(initial_states)
     lines!(ax, det_sim[i, :], color=states_colors[i], alpha=1, label=states_names[i], linewidth=4)
