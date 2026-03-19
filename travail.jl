@@ -80,7 +80,7 @@ using LinearAlgebra
 
 ## Code 
 
-#FONCTIONS
+# FONCTIONS
 
 # Corrige la marice de transition, afin qu'elle suive le modèle de Markov ( programmation défensive )
 # Simulation Non paramétrique puisque l'historique des états n'intervient pas (les transitions précédentes n'affecte pas les prochaines)
@@ -100,7 +100,6 @@ arg1 = une matrice de transition. Les lignes de la matrice représente des distr
 # Retour
 La fonction retourne la matrice de transition potentiellement normalisée pour que les sommes des valeurs de chaque ligne correspondent à 1.
 """
-
 function check_transition_matrix!(T)
     for ligne in axes(T, 1) # Pour tout les lignes de la matrice T
         if sum(T[ligne, :]) != 1 # Si la somme d'une ligne n'est pas égale à 1
@@ -128,7 +127,6 @@ arg2 = la longueur d'un vecteur contenant les états possibles.
 # Retour
 La fonction ne retourne rien.
 """
-
 function check_function_arguments(transitions, states) 
     if size(transitions, 1) != size(transitions, 2) # Si le nombre de ligne n'est pas égal au nombre de colone, renvoie un message d'avertissement 
         throw("La matrice de transition n'est pas carrée")
@@ -159,7 +157,6 @@ arg3 = l'indice de la génération courante sur laquelle la fonction s'applique.
 # Retour
 La fonction ne retourne rien, elle modifie une directement une matrice.
 """
-
 function _sim_stochastic!(timeseries, transitions, generation) # ! signifie que la fonction modifie l'objet (la matrice), et ne fais pas seulement une copie 
     for state in axes(timeseries, 1) # Pour chaques lignes dans la matrice timeseries
 
@@ -195,7 +192,6 @@ arg3 = l'indice de la génération courante sur laquelle la fonction s'applique.
 # Retour
 La fonction ne retourne rien, elle modifie une directement une matrice.
 """
-
 function _sim_determ!(timeseries, transitions, generation)
 
     pop_change = (timeseries[:, generation]' * transitions)'
@@ -233,7 +229,6 @@ keyword2 = un mot-clé pour identifier la manière dont la simulation est réali
 # Retour
 La fonction retourne une matrice représentant le nombre de parcelles dans chaque état pour chaque génération.
 """
-
 function simulation(transitions, states; generations=200, stochastic=false) # peut indiquer directement le nb de generation souhaité et le type de simulation
 
     # Fonctions  " programmation défensive " , s'assurer que respecte model de Markov et que matrice est complète 
@@ -309,7 +304,6 @@ arg2 = un vecteur représentant les proportions de chaque états souhaitées à 
 La fonction retourne les proportions calculées à l'équilibre et nous informe si la matrice de transition
 respecte ou non les proportions souhaitées.
 """
-
 function Verification_resultat_equilibre(T_normal,proportions_souhaitees)
     
   # Calcul les valeurs et vecteurs propre de la matrice de transition
@@ -352,7 +346,6 @@ arg2 = un vecteur représentant les proportions de chaque états souhaitées à 
 # Retour
 La fonction retourne le pourcentage de réussite de la simulation stochastique.
 """
-
 function resultat(timeseries, proportion_souhaitees)
 
     #objet qui stock le nombre de fois que les critères fixés sont respectés 
