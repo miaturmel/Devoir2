@@ -81,10 +81,10 @@ using LinearAlgebra
 ## Code 
 
 ## FONCTIONS
-# Corrige la marice de transition, afin qu'elle suive le modèle de Markov ( programmation défensive )
-# Simulation Non paramétrique puisque l'historique des états n'intervient pas (les transitions précédentes n'affecte pas les prochaines)
-# La fonction "check_transition_matrice"  permet de normaliser la matrice, afin que la somme des probabilité de chaques transition possibles pour un état 
-# initial donné sois de 100% ( chaques lignes = 1)
+## Corrige la marice de transition, afin qu'elle suive le modèle de Markov ( programmation défensive )
+## Simulation Non paramétrique puisque l'historique des états n'intervient pas (les transitions précédentes n'affecte pas les prochaines)
+## La fonction "check_transition_matrice"  permet de normaliser la matrice, afin que la somme des probabilité de chaques transition possibles pour un état 
+## initial donné sois de 100% ( chaques lignes = 1)
 
 """
     check_transition_matrix!(arg1)
@@ -109,8 +109,8 @@ function check_transition_matrix!(T)
     return T 
 end
 
-# La fonction "Check_functions_arguments" vérifie  que l'ensemble des états initiaux et transitions possibles sont inclues ( Programmation défensive )
-# Ne corrige pas automatiquement, mais envoie un message d'avertissement qui signal une exception
+## La fonction "Check_functions_arguments" vérifie  que l'ensemble des états initiaux et transitions possibles sont inclues ( Programmation défensive )
+## Ne corrige pas automatiquement, mais envoie un message d'avertissement qui signal une exception
 
 """
     check_function_arguments(arg1, arg2)
@@ -138,13 +138,13 @@ function check_function_arguments(transitions, states)
 end
 
 ## SIMULATION STOCHASTIC DU MODEL DE SUCCESION VÉGÉTALE
-# Timeseries est une matrice, les lignes sont les états et les colones sont les générations. Au début, seul la colone de la premiere 
-# génération est définie, les autres générations sont vides ( les états pour les générations suivantes ne sont pas calculés ).
-# Applique les probabilités multinomiales de transition sur le nombre de parcelle de chaque état à la génération t ( courante ), afin de déterminer 
-# le nombre de parcelles pour chaques états à la génération t+1 ( suivante )
-# rand permet de sélectionner au hasard quelles parcelles vont subir quelles changement d'état (en respectant les  proabilité weighted de transition )
-# remplis la matrice timeseries avec les nouveaux états pour chaques générations en fonction du nouveau état déterminé par "pop_change" appliqué sur la
-# génération précédente
+## Timeseries est une matrice, les lignes sont les états et les colones sont les générations. Au début, seul la colone de la premiere 
+## génération est définie, les autres générations sont vides ( les états pour les générations suivantes ne sont pas calculés ).
+## Applique les probabilités multinomiales de transition sur le nombre de parcelle de chaque état à la génération t ( courante ), afin de déterminer 
+## le nombre de parcelles pour chaques états à la génération t+1 ( suivante )
+## rand permet de sélectionner au hasard quelles parcelles vont subir quelles changement d'état (en respectant les  proabilité weighted de transition )
+## remplis la matrice timeseries avec les nouveaux états pour chaques générations en fonction du nouveau état déterminé par "pop_change" appliqué sur la
+## génération précédente
 
 """
     _sim_stochastic!(arg1, arg2, arg3)
@@ -169,10 +169,10 @@ function _sim_stochastic!(timeseries, transitions, generation)
 end
 
 ## SIMULATION DÉTERMINISTE DU MODEL DE SUCCESSION VÉGÉTALE 
-# Opération sur matrice, calcul le nombre de parcelles pour chaques nouveau état à la génération suivante (t+1) à  partir des probabilité de la matrice 
-# de transition appliqueée sur les parcelles de la génération actuelle (t)
-# remplis la matrice timeseries avec les nouveaux états pour chaques générations en fonction du nouveau état déterminé par "pop_change" appliqué sur la 
-# génération précédente
+## Opération sur matrice, calcul le nombre de parcelles pour chaques nouveau état à la génération suivante (t+1) à  partir des probabilité de la matrice 
+## de transition appliqueée sur les parcelles de la génération actuelle (t)
+## remplis la matrice timeseries avec les nouveaux états pour chaques générations en fonction du nouveau état déterminé par "pop_change" appliqué sur la 
+## génération précédente
 
 """
     _sim_determ!(arg1, arg2, arg3)
@@ -196,10 +196,10 @@ function _sim_determ!(timeseries, transitions, generation)
 end
 
 ## SIMULATION FINALE
-# Permet de comparer les effet du nombre de generation sur les deux simulations en même temps ainsi que les différences entre les 2 simulations
-# de succession végétale ( stochastique et déterministe )
-# Les arguments de la fonction contiennent des mots clé ( generations = , stochastic = ), permettant de visualiser facilement l'effet de la variation 
-# des paramètres
+## Permet de comparer les effet du nombre de generation sur les deux simulations en même temps ainsi que les différences entre les 2 simulations
+## de succession végétale ( stochastique et déterministe )
+## Les arguments de la fonction contiennent des mots clé ( generations = , stochastic = ), permettant de visualiser facilement l'effet de la variation 
+## des paramètres
 
 """
     simulation(arg1, arg2; keyword1, keyword2)
@@ -240,22 +240,22 @@ end
 
 ## PARAMETRES 
 
-# Vecteur avec les états initiaux  : Vide, gazon, Rose, Lila 
+## Vecteur avec les états initiaux  : Vide, gazon, Rose, Lila 
 
 initial_states = [200, 0, 0, 0] 
 
-# L'effet de stochasticité est grand, puisque la population est petite
+## L'effet de stochasticité est grand, puisque la population est petite
 
 states = length(initial_states)
 
-# Création de la matrice de transition
+## Création de la matrice de transition
 
 T = zeros(Float64, states, states)
 
-# Nous essayons différentes valeurs de contenu de matrice pour nous approcher de la solution
-# La fonction suivante permet de vérifier si la proportion des états à l'équilibre selon la matrice
-# donne le résultat indiqué dans les consignes
-# Le choix manuel des valeurs de la matrice permet de s'assurer que les transitions d'État font du sens biologiquement
+## Nous essayons différentes valeurs de contenu de matrice pour nous approcher de la solution
+## La fonction suivante permet de vérifier si la proportion des états à l'équilibre selon la matrice
+## donne le résultat indiqué dans les consignes
+## Le choix manuel des valeurs de la matrice permet de s'assurer que les transitions d'État font du sens biologiquement
 
 T[1, :] = [100, 1, 0, 0]
 
@@ -268,13 +268,13 @@ T[4, :] = [77, 0, 0, 25]
 T_normal = check_transition_matrix!(T)
 println(T_normal)
 
-proportions_souhaitees = [0.8,0.06,0.05,0.09] ## ( vide, gazon, Rose, Lila)
+proportions_souhaitees = [0.8,0.06,0.05,0.09]
 
 ## CALCUL DES PROPORTIONS À L'ÉQUILIBRE (vecteur propre associé à la plus grande valeur propre)
-# À l'équilibre, les probabilité resteront les même lorsqu'ils sont multipliés par la matrice de transition 
-# Cette fonction permet de vérifier la distribution des différents états à l'équilibre résultant des valeur posé dans la matrice de transition posés précedament 
-# pour que à l'équilibre 20% des parcelles soient végétalisées, et que parmi ces 20%, 30% soient des herbes, et 70% soient des buissons et ue la variété de
-# buisson la moins abondante ne représente pas moins de 30% du total des parcelles occupées par des buissons le vecteur propre souhaité est :
+## À l'équilibre, les probabilité resteront les même lorsqu'ils sont multipliés par la matrice de transition 
+## Cette fonction permet de vérifier la distribution des différents états à l'équilibre résultant des valeur posé dans la matrice de transition posés précedament 
+## pour que à l'équilibre 20% des parcelles soient végétalisées, et que parmi ces 20%, 30% soient des herbes, et 70% soient des buissons et ue la variété de
+## buisson la moins abondante ne représente pas moins de 30% du total des parcelles occupées par des buissons le vecteur propre souhaité est :
 
 """
     Verification_resultat_equilibre(arg1, arg2)
@@ -309,13 +309,13 @@ function Verification_resultat_equilibre(T_normal,proportions_souhaitees)
     return proportions_calculees
 end 
 
-# Créer un objet avec le résultat de la fonction, ce qui permet de faire le message d'erreur si besoin
-# Donne les proportions acceptable atteint avec la matrice de transition trouvée par essais-erreur
+## Créer un objet avec le résultat de la fonction, ce qui permet de faire le message d'erreur si besoin
+## Donne les proportions acceptable atteint avec la matrice de transition trouvée par essais-erreur
 
 proportions_calculees = Verification_resultat_equilibre(T_normal,proportions_souhaitees)
 println(proportions_calculees)
 
-# Une fois la matrice de transition déterminée, vérifier si les critères sont respectés dans au moins 80% des simulations
+## Une fois la matrice de transition déterminée, vérifier si les critères sont respectés dans au moins 80% des simulations
 
 """
     resultat(arg1, arg2)
@@ -354,33 +354,33 @@ function resultat(timeseries, proportion_souhaitees)
 
 end 
 
-# Affiche le résultat de la fonction, et indique si la stochasticité permet de maintenir l'atteinte des critère plus ou moins de 80% des simulations
+## Affiche le résultat de la fonction, et indique si la stochasticité permet de maintenir l'atteinte des critère plus ou moins de 80% des simulations
 
 pourcentage_reussite = resultat(timeseries, proportions_souhaitees)
 println(" Les critère fixés sont atteints dans ",(pourcentage_reussite), "% des simulations")
 
 ## PARAMETRE DU GRAPHIQUE
 
-# Légende et couleurs associé
+## Légende et couleurs associé
 
 states_names = ["vide", "Gazon", "Rose","Lila"]
 states_colors = [:grey40, :green, :pink, :purple]
 
-# Simulations sur le graphique
+## Simulations sur le graphique
 
 f = Figure()
 ax = Axis(f[1, 1], xlabel="Nb. générations", ylabel="Nb. parcelles")
 
-# Zoom 1 sur 10 % des 200 parcelles ( gazon, lila, Rose)
+## Zoom 1 sur 10 % des 200 parcelles ( gazon, lila, Rose)
 
-# limits!(ax, 0, 100, 0, 20)
+## limits!(ax, 0, 100, 0, 20)
 
-# Zoom 2 sur les parcelles vide  
+## Zoom 2 sur les parcelles vide  
 
-# limits!(ax, 0, 100, 180, 200)
+## limits!(ax, 0, 100, 180, 200)
 
-# Superpose les 2 types de simulation sur le graphique, pour l'analyse
-# Stochastic simulation
+## Superpose les 2 types de simulation sur le graphique, pour l'analyse
+## Stochastic simulation
 
 for _ in 1:100
     sto_sim = simulation(T, initial_states; stochastic=true, generations=200)
@@ -389,7 +389,7 @@ for _ in 1:100
     end
 end
 
-# Deterministic simulation
+## Deterministic simulation
 
 det_sim = simulation(T, initial_states; stochastic=false, generations=200)
 for i in eachindex(initial_states)
